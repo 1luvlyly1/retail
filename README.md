@@ -43,18 +43,3 @@ docker/     Dockerfile phụ trợ, init.sql
 nginx/      Nginx config
 scripts/    setup.sh
 ```
-
-## Chạy nhanh
-
-```bash
-cp .env.example .env   # điền ANTHROPIC_API_KEY, OPENAI_API_KEY, TAVILY_API_KEY
-./scripts/setup.sh
-```
-
-API: `localhost:8000` · Docs: `localhost:8000/api/docs` · Frontend: `localhost:80`
-
-## Tuỳ chọn khác
-
-- **Google Drive:** tạo service account trên Google Cloud, lưu key vào `docker/google-credentials.json`, điền `GOOGLE_DRIVE_ROOT_FOLDER_ID` trong `.env`.
-- **Cloudflare Access:** dùng `cloudflared tunnel` + Cloudflare Zero Trust để bảo vệ URL bằng SSO công ty, không cần code auth.
-- **Biến môi trường đầy đủ:** xem [.env.example](.env.example).
