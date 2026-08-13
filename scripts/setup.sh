@@ -33,7 +33,7 @@ ok "Thư mục tạo xong"
 # Google credentials placeholder
 if [ ! -f "docker/google-credentials.json" ]; then
     warn "Thiếu docker/google-credentials.json"
-    warn "Xem hướng dẫn: docker/GOOGLE_DRIVE_SETUP.md"
+    warn "Xem hướng dẫn: README.md"
     echo '{"type":"service_account","placeholder":true}' > docker/google-credentials.json
 fi
 
@@ -69,5 +69,4 @@ echo "║                                          ║"
 echo "║  Logs: docker compose logs -f            ║"
 echo "╚══════════════════════════════════════════╝"
 echo ""
-echo "Cloudflare Tunnel: xem .cloudflare/SETUP.md"
-echo "Google Drive:      xem docker/GOOGLE_DRIVE_SETUP.md"
+echo "Cloudflare Tunnel & Google Drive: xem README.md"
