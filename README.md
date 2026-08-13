@@ -1,24 +1,47 @@
 # Site Visit AI Assistant
 
-Ứng dụng hỗ trợ nhân viên khảo sát hiện trường (site visit): chụp ảnh, chat với AI để bổ sung thông tin, tra cứu công ty và xuất báo cáo.
+Ứng dụng hỗ trợ nhân viên khảo sát hiện trường: chụp ảnh, chat với AI để bổ sung thông tin, tra cứu công ty và xuất báo cáo.
 
-## Tech stack
+## Kiến trúc
 
-- **Backend:** FastAPI + SQLAlchemy (async) + Alembic, Celery + Redis cho xử lý ảnh nền
-- **Frontend:** React + Vite + Tailwind CSS
-- **DB:** PostgreSQL
-- **AI:** Anthropic Claude, OpenAI GPT-4, Tavily Search
-- **Lưu trữ ảnh:** Local disk hoặc Google Drive
-- **Hạ tầng:** Docker Compose, Nginx
+```
+                       ┌──────────────┐
+                       │    Nginx     │
+                       └──────┬───────┘
+                              │
+                   ┌──────────┴──────────┐
+                   │                     │
+            ┌──────▼──────┐      ┌───────▼───────┐
+            │  Frontend   │      │    Backend     │
+            │ React+Vite  │      │   FastAPI      │
+            └─────────────┘      └───────┬────────┘
+                                          │
+                    ┌─────────────┬───────┴───────┬──────────────┐
+                    │             │                │              │
+             ┌──────▼─────┐ ┌─────▼─────┐  ┌───────▼──────┐ ┌────▼─────┐
+             │ PostgreSQL │ │   Redis   │  │ Celery Worker │ │  AI APIs │
+             │            │ │(broker/   │  │ (xử lý ảnh,   │ │ Claude / │
+             │            │ │ cache)    │  │  enrichment)  │ │ GPT-4 /  │
+             └────────────┘ └───────────┘  └───────┬───────┘ │ Tavily   │
+                                                     │         └──────────┘
+                                            ┌────────▼────────┐
+                                            │ Local disk /     │
+                                            │ Google Drive     │
+                                            └──────────────────┘
+```
 
-## Cấu trúc
+- **Backend:** FastAPI (async) + SQLAlchemy + Alembic — REST API và WebSocket
+- **Celery + Redis:** xử lý ảnh và enrichment chạy nền, tách khỏi request chính
+- **Frontend:** React + Vite, giao tiếp qua REST + WebSocket
+- **Lưu ảnh:** local disk hoặc Google Drive (tuỳ chọn qua service account)
+- **Nginx:** reverse proxy, serve frontend build + route API/WS tới backend
 
 ```
 backend/    FastAPI app (api, services, models, workers)
 frontend/   React app
 docker/     Dockerfile phụ trợ, init.sql
 nginx/      Nginx config
-scripts/    setup.sh — script cài đặt tự động
+scripts/    setup.sh
 ```
 
 ## Chạy nhanh
@@ -28,34 +51,10 @@ cp .env.example .env   # điền ANTHROPIC_API_KEY, OPENAI_API_KEY, TAVILY_API_K
 ./scripts/setup.sh
 ```
 
-Script sẽ khởi động Postgres, Redis, chạy migration, và bật toàn bộ services qua Docker Compose.
+API: `localhost:8000` · Docs: `localhost:8000/api/docs` · Frontend: `localhost:80`
 
-- API: http://localhost:8000
-- API docs: http://localhost:8000/api/docs
-- Frontend: http://localhost:80
+## Tuỳ chọn khác
 
-## Google Drive (tuỳ chọn — lưu ảnh trên Drive thay vì local)
-
-1. Tạo Google Cloud Project → bật **Google Drive API**
-2. Tạo **Service Account** → tải file JSON key
-3. Lưu vào `docker/google-credentials.json`
-4. Tạo folder trên Drive, share cho email service account (role Editor)
-5. Điền `GOOGLE_DRIVE_ROOT_FOLDER_ID` trong `.env`
-
-## Cloudflare Access (tuỳ chọn — bảo vệ URL không cần code auth)
-
-Dùng Cloudflare Tunnel + Access để chặn truy cập ở tầng DNS, yêu cầu đăng nhập bằng email công ty (Google/Microsoft/GitHub SSO) mà không cần viết login trong app.
-
-```bash
-brew install cloudflare/cloudflare/cloudflared
-cloudflared tunnel login
-cloudflared tunnel create sitevisit-ai
-cloudflared tunnel route dns sitevisit-ai <your-domain>
-cloudflared tunnel run sitevisit-ai
-```
-
-Sau đó vào [Cloudflare Zero Trust dashboard](https://one.dash.cloudflare.com) → **Access → Applications** → tạo policy giới hạn theo domain email.
-
-## Biến môi trường
-
-Xem [.env.example](.env.example) để biết đầy đủ danh sách.
+- **Google Drive:** tạo service account trên Google Cloud, lưu key vào `docker/google-credentials.json`, điền `GOOGLE_DRIVE_ROOT_FOLDER_ID` trong `.env`.
+- **Cloudflare Access:** dùng `cloudflared tunnel` + Cloudflare Zero Trust để bảo vệ URL bằng SSO công ty, không cần code auth.
+- **Biến môi trường đầy đủ:** xem [.env.example](.env.example).
