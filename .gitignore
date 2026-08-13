@@ -1,0 +1,14 @@
+.env
+docker/google-credentials.json
+backend/credentials/
+.cloudflare/config.yml
+__pycache__/
+*.pyc
+.venv/
+venv/
+frontend/node_modules/
+frontend/dist/
+/tmp/
+*.log
+.DS_Store
+celerybeat-schedule
